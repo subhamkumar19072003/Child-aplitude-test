@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 
 export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
-  const [ageGroup, setAgeGroup] = useState(null);
+  const [ageGroup, setAgeGroup] = useState<string | null>(null);
   const [gamesCompleted, setGamesCompleted] = useState(0);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
@@ -18,19 +18,19 @@ export default function Home() {
     colorGame: { score: 0, time: 0 },
     reactionGame: { score: 0, time: 0 }
   });
-  const [questionTimes, setQuestionTimes] = useState([]);
-  const questionStartTime = useRef(null);
+  const [questionTimes, setQuestionTimes] = useState<number[]>([]);
+  const questionStartTime = useRef<number | null>(null);
   
   // Game states
   const [clickCounter, setClickCounter] = useState(0);
-  const [clickStartTime, setClickStartTime] = useState(null);
-  const [memorySequence, setMemorySequence] = useState([]);
-  const [userSequence, setUserSequence] = useState([]);
-  const [memoryStage, setMemoryStage] = useState("waiting");
-  const [colorTarget, setColorTarget] = useState(null);
-  const [colorOptions, setColorOptions] = useState([]);
+  const [clickStartTime, setClickStartTime] = useState<number | null>(null);
+  const [memorySequence, setMemorySequence] = useState<number[]>([]);
+  const [userSequence, setUserSequence] = useState<number[]>([]);
+  const [memoryStage, setMemoryStage] = useState<"waiting" | "showing" | "inputting" | "success" | "failed">("waiting");
+  const [colorTarget, setColorTarget] = useState<string | null>(null);
+  const [colorOptions, setColorOptions] = useState<string[]>([]);
   const [waitingForReaction, setWaitingForReaction] = useState(false);
-  const [reactionStartTime, setReactionStartTime] = useState(null);
+  const [reactionStartTime, setReactionStartTime] = useState<number | null>(null);
   const [reactionMessage, setReactionMessage] = useState("Get ready...");
 
   useEffect(() => {
@@ -48,8 +48,15 @@ export default function Home() {
     }
   }, [currentQuestion, ageGroup, gamesCompleted, quizFinished]);
 
+  // Define question type
+  interface Question {
+    question: string;
+    options: string[];
+    scores: number[];
+  }
+
   // Age-based Questions
-  const questions = {
+  const questions: Record<string, Question[]> = {
     "5-10": [
       { question: "Which is the largest planet?", options: ["Earth", "Mars", "Jupiter", "Venus"], scores: [1, 2, 3, 1] },
       { question: "What comes after 29?", options: ["30", "31", "29", "32"], scores: [3, 1, 0, 2] },
@@ -74,16 +81,20 @@ export default function Home() {
   };
 
   // Handle Answer Selection
-  const handleAnswer = (index) => {
+  const handleAnswer = (index: number) => {
     // Record time taken for this question
-    const timeTaken = (Date.now() - questionStartTime.current) / 1000;
-    setQuestionTimes(prev => [...prev, timeTaken]);
+    if (questionStartTime.current !== null) {
+      const timeTaken = (Date.now() - questionStartTime.current) / 1000;
+      setQuestionTimes(prev => [...prev, timeTaken]);
+    }
     
     // Update score
-    setScore(score + questions[ageGroup][currentQuestion].scores[index]);
+    if (ageGroup) {
+      setScore(score + questions[ageGroup][currentQuestion].scores[index]);
+    }
     
     // Move to next question or finish quiz
-    if (currentQuestion + 1 < questions[ageGroup].length) {
+    if (ageGroup && currentQuestion + 1 < questions[ageGroup].length) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       setQuizFinished(true);
@@ -117,13 +128,15 @@ export default function Home() {
     
     if (clickCounter === 4) {
       const endTime = Date.now();
-      const timeTaken = (endTime - clickStartTime) / 1000;
-      const clickScore = Math.max(0, Math.floor(10 - timeTaken));
-      
-      setGameStats(prev => ({
-        ...prev,
-        clickGame: { score: clickScore, time: timeTaken }
-      }));
+      if (clickStartTime !== null) {
+        const timeTaken = (endTime - clickStartTime) / 1000;
+        const clickScore = Math.max(0, Math.floor(10 - timeTaken));
+        
+        setGameStats(prev => ({
+          ...prev,
+          clickGame: { score: clickScore, time: timeTaken }
+        }));
+      }
       
       setGamesCompleted(gamesCompleted + 1);
       setClickCounter(0);
@@ -157,7 +170,7 @@ export default function Home() {
     }, 1000);
   };
 
-  const handleMemoryInput = (buttonIndex) => {
+  const handleMemoryInput = (buttonIndex: number) => {
     if (memoryStage !== "inputting") return;
     
     const newUserSequence = [...userSequence, buttonIndex];
@@ -199,7 +212,9 @@ export default function Home() {
     setColorOptions(options);
   };
 
-  const handleColorSelection = (selected) => {
+  const handleColorSelection = (selected: string) => {
+    if (colorTarget === null) return;
+    
     const correct = selected === colorTarget;
     const colorScore = correct ? 10 : 0;
     
@@ -350,7 +365,7 @@ export default function Home() {
                   {memoryStage === "showing" && "Watch the pattern..."}
                   {memoryStage === "inputting" && "Now repeat the pattern!"}
                   {memoryStage === "success" && "Great job! You remembered correctly."}
-                  {memoryStage === "failed" && "Not quite right. Let's move on to the next game."}
+                  {memoryStage === "failed" && "Not quite right. Let&apos;s move on to the next game."}
                 </div>
               </div>
             )}
@@ -407,7 +422,7 @@ export default function Home() {
             {!waitingForReaction && gamesCompleted === 3 ? (
               <div>
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Test your reaction speed. Click when the text changes to CLICK NOW!
+                  Test your reaction speed. Click when the text changes to &quot;CLICK NOW!&quot;
                 </p>
                 <button 
                   className="bg-indigo-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-indigo-700 transition"
