@@ -407,7 +407,7 @@ export default function Home() {
             {!waitingForReaction && gamesCompleted === 3 ? (
               <div>
                 <p className="text-gray-600 dark:text-gray-300 mb-4">
-                  Test your reaction speed. Click when the text changes to "CLICK NOW!"
+                  Test your reaction speed. Click when the text changes to CLICK NOW!
                 </p>
                 <button 
                   className="bg-indigo-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-indigo-700 transition"
